@@ -8,6 +8,7 @@ cards = [n for _ in range(0, 24) for n in set_cards]
 
 def deal_card(hand):
     '''Deals a card and sets it in hand. It returns the total value of the cards in hand.'''
+    global cards
     card = random.choice(cards)
     hand.append(card)
     cards.remove(card)
