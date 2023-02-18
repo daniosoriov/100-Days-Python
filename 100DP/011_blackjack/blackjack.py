@@ -4,7 +4,7 @@ from os import system
 
 # Create the cards with 6 decks.
 set_cards = ['A', 'J', 'Q', 'K'] + list(range(2, 11))
-cards = [n for _ in range(0, 24) for n in set_cards]
+cards = set_cards * 24
 
 def deal_card(hand):
     '''Deals a card and sets it in hand. It returns the total value of the cards in hand.'''
