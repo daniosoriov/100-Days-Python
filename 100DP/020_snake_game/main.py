@@ -35,12 +35,20 @@ while play:
     # Crashed against wall
     if snake.head.xcor() > 280 or snake.head.xcor() < -280 or snake.head.ycor() > 280 or snake.head.ycor() < -280:
         scoreboard.game_over('You crashed against the wall!')
-        play = False
+        screen.update()
+        snake.reset()
+        food.new_position()
+        scoreboard.reset()
+        time.sleep(1)
 
     # Crashed against itself
     for block in snake.snake[1:]:
         if snake.head.distance(block) < 10:
             scoreboard.game_over('You crashed against yourself!')
-            play = False
+            screen.update()
+            snake.reset()
+            food.new_position()
+            scoreboard.reset()
+            time.sleep(1)
 
 screen.exitonclick()

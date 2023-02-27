@@ -12,6 +12,7 @@ class Snake:
     def __init__(self, ):
         """Initializing variables"""
         self.snake = []
+        self.snake_parked = []
         self.create_initial_snake()
         self.head = self.snake[0]
 
@@ -22,10 +23,12 @@ class Snake:
 
     def add_snake_block(self, pos):
         """Create a snake block and assign the position with pos"""
-        tmp = t.Turtle('square')
-        color = '#' + ''.join(r.choices('0123456789ABCDEF', k=6))
-        tmp.color(color)
-        tmp.up()
+        if len(self.snake_parked):
+            tmp = self.snake_parked.pop()
+        else:
+            tmp = t.Turtle('square')
+            tmp.color('#' + ''.join(r.choices('0123456789ABCDEF', k=6)))
+            tmp.up()
         tmp.setpos(pos)
         self.snake.append(tmp)
 
@@ -58,3 +61,12 @@ class Snake:
     def extend_snake(self):
         self.add_snake_block(self.snake[-1].pos())
 
+    def reset(self):
+        for s in self.snake[3:]:
+            s.setpos(-800, -800)
+            self.snake_parked.append(s)
+            self.snake.remove(s)
+
+        self.head.setheading(RIGHT)
+        for n, s in enumerate(self.snake):
+            s.setpos(INITIAL_POSITION[n])
