@@ -49,14 +49,10 @@ class Birthday:
         Gets a text from OpenAI ChatGPT for the birthday wish
         :return: None
         """
-        prompt = """Create a warm and loving birthday wish letter, refer to the birthday person using a placeholder [
-        NAME] and do not mention age. Use new lines. The letter should contain a dad joke, an incredibly overlooked 
-        fact and a love quotation. The letter should be connected, displaying humour and joy. Lastly, remind the 
-        beauty of being alive, and don't sign it at the end."""
         openai.api_key = self.api_key
         response = openai.Completion.create(
             model="text-davinci-003",
-            prompt=prompt,
+            prompt=bv.prompt,
             temperature=0.6,
             max_tokens=500,
             top_p=1,
@@ -108,7 +104,7 @@ class Birthday:
                 mapping = {'dadjokes': 'joke', 'jokes': 'joke', 'facts': 'fact'}
                 self.random_text = json.loads(response.text)[0][mapping[what]].strip()
         else:
-            print("Error with Ninja API: ", response.status_code, response.text)
+            logger.error(f'Ninja API problem: {response.status_code} {response.text}')
             self.random_text = f'No {what} for now'
 
     def get_recipients(self, contacts_filepath: str) -> None:

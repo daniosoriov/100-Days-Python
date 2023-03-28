@@ -1,3 +1,8 @@
+prompt = """Create a warm and loving birthday wish letter, refer to the birthday person using a placeholder [
+        NAME] and do not mention age. Use new lines. The letter should contain a dad joke, an incredibly overlooked 
+        fact and a love quotation. The letter should be connected, displaying humour and joy. Lastly, remind the 
+        beauty of being alive, and don't sign it at the end."""
+
 signature = f"""\
 <br /><br />
             Dani
