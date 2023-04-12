@@ -3,6 +3,7 @@ This is a multiple choice trivia game that keeps the score of the user. The API 
 """
 import requests
 import tkinter as tk
+import tkinter.simpledialog as sd
 import random as r
 
 SCORE_FILE = 'score.txt'
@@ -14,7 +15,12 @@ INCORRECT_COLOR = '#dc3545'
 
 
 class Questions:
-    def __init__(self) -> None:
+    def __init__(self, name: str) -> None:
+        """
+        Initializes the class and saves the name of the user.
+        :param name: the name of the user.
+        """
+        self.name = name
         self.questions_queue = []
         self.questions_asked = []
         self.current_question = {}
@@ -25,6 +31,7 @@ class Questions:
         self.score = 0
         self.highest_score = 0
         self.highest_score_questions = 0
+        self.highest_score_name = ''
         self.get_highest_score()
 
     def fetch_questions(self) -> None:
@@ -72,9 +79,9 @@ class Questions:
         """
         try:
             with open(SCORE_FILE) as score_file:
-                self.highest_score_questions, self.highest_score = score_file.read().split('/')
+                self.highest_score_name, self.highest_score_questions, self.highest_score = score_file.read().split('/')
         except FileNotFoundError:
-            self.highest_score_questions, self.highest_score = 0, 0
+            self.highest_score_name, self.highest_score_questions, self.highest_score = '', 0, 0
 
     def set_highest_score(self) -> None:
         """
@@ -83,10 +90,11 @@ class Questions:
         """
         try:
             with open(SCORE_FILE, 'w') as score_file:
-                score_file.write(f'{len(self.questions_asked)}/{self.score}')
+                score_file.write(f'{self.name}/{len(self.questions_asked)}/{self.score}')
         except FileNotFoundError:
             pass
         finally:
+            self.highest_score_name = self.name
             self.highest_score_questions, self.highest_score = len(self.questions_asked), self.score
 
 
@@ -106,7 +114,8 @@ def check_answer(answer: str) -> None:
     if questions.score > int(questions.highest_score):
         questions.set_highest_score()
         highest_score.config(
-            text=f'Highest score: {questions.highest_score} from {questions.highest_score_questions} questions')
+            text=f'Highest score by: {questions.highest_score_name}\n'
+                 f'Highest score: {questions.highest_score} from {questions.highest_score_questions} questions')
 
     questions.initialize_question()
     question.config(text=questions.trivia)
@@ -120,7 +129,8 @@ def check_answer(answer: str) -> None:
                            command=lambda: check_answer(questions.answers_shuffled[3]))
 
 
-questions = Questions()
+user_name = sd.askstring('Name', 'What is your name?')
+questions = Questions(user_name)
 questions.fetch_questions()
 questions.initialize_question()
 trivia = questions.trivia
@@ -132,7 +142,8 @@ window.config(pady=PADY * 4, padx=PADY * 4)
 window.geometry('600x600')
 
 highest_score = tk.Label(
-    text=f'Highest score: {questions.highest_score} from {questions.highest_score_questions} questions')
+    text=f'Highest score by: {questions.highest_score_name}\n'
+         f'Highest score: {questions.highest_score} from {questions.highest_score_questions} questions')
 highest_score.pack(side='top', anchor='center', pady=PADY)
 
 score = tk.Label(text='Score: 0 from 0 questions')
