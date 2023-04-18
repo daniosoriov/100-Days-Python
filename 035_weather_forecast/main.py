@@ -3,8 +3,19 @@ import os
 import datetime
 import smtplib
 import logging
+import logging.handlers
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logger = logging.getLogger('weather-log')
+logger.setLevel(logging.INFO)
+handler = logging.handlers.RotatingFileHandler('weather-emails.log', maxBytes=5 * 1024 * 1024, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def get_weather_data() -> dict:
@@ -82,7 +93,7 @@ def send_email(message: list) -> None:
         server.starttls()
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, msg.as_string())
-        logging.info(f'Alerts found! Email sent to {receiver_email}')
+        logger.info(f'Alerts found! Email sent to {receiver_email}')
 
 
 def main() -> None:
@@ -108,10 +119,8 @@ def main() -> None:
     if 'alerts' in weather_data:
         send_email(lines)
     else:
-        logging.info('No alers, no email sent.')
+        logger.info('No alerts, no email sent.')
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='weather-emails.log', format='%(asctime)s - %(levelname)s - %(message)s',
-                        level=logging.INFO)
     main()
