@@ -1,6 +1,7 @@
 import json
 import re
 import smtplib
+import os
 import requests
 import pandas as pd
 import logging.config
@@ -10,10 +11,11 @@ from email.mime.multipart import MIMEMultipart
 import openai
 import birthday_variables as bv
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv()
 
 THIS_FOLDER = Path(__file__).parent.resolve()
-JSON_FILE = THIS_FOLDER / 'data.json'
 CONTACTS_FILE = THIS_FOLDER / 'contacts.csv'
 LOGGING_CONF_FILE = THIS_FOLDER / 'logging_conf.json'
 
@@ -26,21 +28,18 @@ logger = logging.getLogger(__name__)
 
 class Birthday:
 
-    def __init__(self, json_filepath: str, source: str = 'openai') -> None:
+    def __init__(self, source: str = 'openai') -> None:
         """
         Initializes the class.
-        :param json_filepath: the json file where the sensitive data is stored
         :param source: either 'openai' or 'ninja'
         """
-        with open(json_filepath) as json_file:
-            json_data = json.load(json_file)
-            self.gmail_user = json_data['user']
-            self.gmail_password = json_data['password']
-            self.source = source
-            if source == 'openai':
-                self.api_key = json_data['openai_key']
-            else:
-                self.api_key = json_data['ninja_api_key']
+        self.gmail_user = os.environ.get('USER')
+        self.gmail_password = os.environ.get('PASSWORD')
+        self.source = source
+        if source == 'openai':
+            self.api_key = os.environ.get('OPENAI_KEY')
+        else:
+            self.api_key = os.environ.get('NINJA_API_KEY')
         self.random_text = ''
         self.recipients = {}
 
@@ -59,26 +58,6 @@ class Birthday:
             frequency_penalty=0.2,
             presence_penalty=0.2,
         )
-        """response = {
-            "choices": [
-                {
-                    "finish_reason": "stop",
-                    "index": 0,
-                    "logprobs": "null",
-                    "text": "\n\nHappy Birthday [NAME], \n\nI hope this special day brings you all the joy and happiness your heart desires. \n\nDid you hear about the restaurant on the moon? Great food, no atmosphere. \n\nHere's an incredibly overlooked fact: The average person walks the equivalent of two marathons a year \u2013 just to get to work and back! \n\n\"The best and most beautiful things in the world cannot be seen or even touched - they must be felt with the heart.\" \u2015 Helen Keller \n\nEvery day is a blessing, especially on a day like today. Celebrate life and enjoy your special day! \n\nLove always, \n[YOUR NAME]"
-                }
-            ],
-            "created": 1679947584,
-            "id": "cmpl-6ynOimH4Y7YHDzEgEY4RVIAtzAfNq",
-            "model": "text-davinci-003",
-            "object": "text_completion",
-            "usage": {
-                "completion_tokens": 121,
-                "prompt_tokens": 67,
-                "total_tokens": 188
-            }
-        }"""
-        # logger.info(f"'Text from OpenAI: {response['choices'][0]['text']}'")
         openai_text = response['choices'][0]['text'].replace('[YOUR NAME]', '')
         self.random_text = openai_text.lstrip().replace('\n\n', '<br /><br />').replace('\n', '<br />')
 
@@ -107,9 +86,9 @@ class Birthday:
             logger.error(f'Ninja API problem: {response.status_code} {response.text}')
             self.random_text = f'No {what} for now'
 
-    def get_recipients(self, contacts_filepath: str) -> None:
+    def get_recipients(self, contacts_filepath: Path) -> None:
         """
-        Check the contacts.csv file and fetch who has theur birthday today.
+        Check the contacts.csv file and fetch who has their birthday today.
         :param contacts_filepath: the filepath to the csv.
         :return: None
         """
@@ -138,7 +117,7 @@ class Birthday:
 
         msg['From'] = from_email
         msg['To'] = recipient_email
-        msg['Bcc'] = from_email
+        msg['Bcc'] = os.environ.get('BCC_USER')
         msg['Subject'] = subject_email
         msg.add_header('Content-Type', 'text/html')
 
@@ -154,28 +133,27 @@ class Birthday:
             logger.info(f'Email sent to {recipient_email}')
 
 
-birthday = Birthday(JSON_FILE, 'openai')
-birthday.get_recipients(CONTACTS_FILE)
-if not birthday.recipients:
-    logger.info('Nobody has a birthday today!')
-else:
-    for _, person in birthday.recipients.items():
-        recipient = f"{person['full_name']} <{person['email']}>"
-        subject = f"Happy birthday {person['name']}!"
-        html = ''
-        if birthday.source == 'openai':
-            birthday.get_openai_random()
-            html = bv.html_openai.replace('[OPENAI_TEXT]', birthday.random_text)
-        elif birthday.source == 'ninja':
-            birthday.get_ninja_random('dadjokes')
-            html = bv.html_ninja.replace('[DAD_JOKE]', birthday.random_text)
-            birthday.get_ninja_random('jokes')
-            html = html.replace('[JOKE]', birthday.random_text)
-            birthday.get_ninja_random('facts')
-            html = html.replace('[FACT]', birthday.random_text)
-            birthday.get_ninja_random('quotes')
-            html = html.replace('[QUOTE]', birthday.random_text)
-        html = html.replace('[NAME]', person['name'])
-        birthday.send_email(html, recipient, subject)
-        # Test with dani@daniosorio.com
-        # birthday.send_email(html, 'Daniel Osorio <dani@daniosorio.com>', subject)
+if __name__ == '__main__':
+    birthday = Birthday('openai')
+    birthday.get_recipients(CONTACTS_FILE)
+    if not birthday.recipients:
+        logger.info('Nobody has a birthday today!')
+    else:
+        for _, person in birthday.recipients.items():
+            recipient = f"{person['full_name']} <{person['email']}>"
+            subject = f"Happy birthday {person['name']}!"
+            html = ''
+            if birthday.source == 'openai':
+                birthday.get_openai_random()
+                html = bv.html_openai.replace('[OPENAI_TEXT]', birthday.random_text)
+            elif birthday.source == 'ninja':
+                birthday.get_ninja_random('dadjokes')
+                html = bv.html_ninja.replace('[DAD_JOKE]', birthday.random_text)
+                birthday.get_ninja_random('jokes')
+                html = html.replace('[JOKE]', birthday.random_text)
+                birthday.get_ninja_random('facts')
+                html = html.replace('[FACT]', birthday.random_text)
+                birthday.get_ninja_random('quotes')
+                html = html.replace('[QUOTE]', birthday.random_text)
+            html = html.replace('[NAME]', person['name'])
+            birthday.send_email(html, recipient, subject)
