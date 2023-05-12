@@ -6,6 +6,7 @@ import logging
 import logging.handlers
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+# The package name is python-dotenv
 from dotenv import load_dotenv
 
 load_dotenv()
