@@ -4,6 +4,7 @@ import smtplib
 import os
 import requests
 import pandas as pd
+import random
 import logging.config
 from datetime import date
 from email.mime.text import MIMEText
@@ -31,7 +32,7 @@ class Birthday:
     def __init__(self, source: str = 'openai') -> None:
         """
         Initializes the class.
-        :param source: either 'openai' or 'ninja'
+        :param source: Either 'openai' or 'ninja'
         """
         self.gmail_user = os.environ.get('USER')
         self.gmail_password = os.environ.get('PASSWORD')
@@ -42,6 +43,18 @@ class Birthday:
             self.api_key = os.environ.get('NINJA_API_KEY')
         self.random_text = ''
         self.recipients = {}
+        self.prompt = ''
+
+    def make_prompt(self) -> None:
+        """
+        Creates the prompt to feed to ChatGPT
+        :return: None
+        """
+        joke = random.choice(bv.variables['jokes'])
+        fact = random.choice(bv.variables['facts'])
+        quote = random.choice(bv.variables['quotes'])
+        variables = f'{joke}, {fact} and {quote}'
+        self.prompt = bv.prompt.replace('[variables]', variables)
 
     def get_openai_random(self) -> None:
         """
@@ -49,22 +62,26 @@ class Birthday:
         :return: None
         """
         openai.api_key = self.api_key
-        response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=bv.prompt,
+        self.make_prompt()
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a friendly and warm assistant."},
+                {"role": "user", "content": self.prompt},
+            ],
             temperature=0.6,
             max_tokens=500,
             top_p=1,
             frequency_penalty=0.2,
             presence_penalty=0.2,
         )
-        openai_text = response['choices'][0]['text'].replace('[YOUR NAME]', '')
+        openai_text = response['choices'][0]['message']['content'].replace('[YOUR NAME]', '')
         self.random_text = openai_text.lstrip().replace('\n\n', '<br /><br />').replace('\n', '<br />')
 
     def get_ninja_random(self, what: str) -> None:
         """
         Gets random texts from the Ninja API.
-        :param what: a string for the type of text to get from Ninja
+        :param what: A string for the type of text to get from Ninja
         :return: None
         """
         if what == 'quotes':
@@ -89,7 +106,7 @@ class Birthday:
     def get_recipients(self, contacts_filepath: Path) -> None:
         """
         Check the contacts.csv file and fetch who has their birthday today.
-        :param contacts_filepath: the filepath to the csv.
+        :param contacts_filepath: The filepath to the csv.
         :return: None
         """
         df = pd.read_csv(contacts_filepath)

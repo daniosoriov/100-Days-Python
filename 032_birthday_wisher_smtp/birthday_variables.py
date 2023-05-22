@@ -1,7 +1,33 @@
-prompt = """Create a warm and loving birthday wish letter, refer to the birthday person using a placeholder [
-        NAME] and do not mention age. Use new lines. The letter should contain a dad joke, an incredibly overlooked 
-        fact and a love quotation. The letter should be connected, displaying humour and joy. Lastly, remind the 
-        beauty of being alive, and don't sign it at the end."""
+prompt = """Create a warm and loving birthday wish letter, refer to the birthday person using the placeholder [NAME] 
+        and do not mention age. Use new lines. The letter should contain [variables]. The letter should be connected, 
+        displaying humour and joy. Lastly, remind the beauty of being alive, and don't sign it at the end."""
+
+variables = {
+    'jokes': [
+        'a dad joke',
+        'a famous quote by a commedian about birthdays',
+        'a word play/pun',
+        'a joke about aging',
+        'a joke about growing old',
+        'a vegan joke',
+    ],
+    'facts': [
+        'an incredibly overlooked fact',
+        'a fact about the universe',
+        'an age/aging fact',
+        'a cute fact about a random animal',
+        'a very exciting mathematical fact',
+        'an impressive positive historical event',
+    ],
+    'quotes': [
+        'a love quote',
+        'a friendship quote',
+        'a movie quote',
+        'a wisdom quote',
+        'a stoic quote',
+        'a quote from incubus',
+    ]
+}
 
 signature = f"""\
 <br /><br />
@@ -56,4 +82,3 @@ html_openai = f"""\
     </body>
 </html>
 """
-
