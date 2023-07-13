@@ -37,7 +37,8 @@ def get_yahoo_values() -> dict:
         # print(dir(tickers_info.tickers[tick]))
         # for key, val in tickers_info.tickers[tick].info.items():
         #     print(key, val)
-        recommendation = tickers_info.tickers[tick].info.get('recommendationKey', '-')
+        # TODO: The recommendation stopped working, so I am commenting it out for now.
+        # recommendation = tickers_info.tickers[tick].info.get('recommendationKey', '-')
         before_yesterday_close = tickers['Close'][tick][3]
         yesterday_close = tickers['Adj Close'][tick][4]
         change = yesterday_close - before_yesterday_close
@@ -47,7 +48,7 @@ def get_yahoo_values() -> dict:
             'ye_close': f"{yesterday_close:.2f}",
             'change': f"{change:.2f}",
             'change_p': change_percentage,
-            'guidance': recommendation,
+            # 'guidance': recommendation,
         }
     return values
 
