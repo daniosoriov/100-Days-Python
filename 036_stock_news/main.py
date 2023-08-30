@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 import yfinance as yf
 import os
 import smtplib
@@ -25,13 +27,13 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def get_yahoo_values() -> dict:
+def get_yahoo_values() -> Dict:
     """
     Gets the stock values from Yahoo finance
     :return: a dictionary with the needed values for the email
     """
     tickers = yf.download(TICKERS_LIST, period='5d', interval='1d', progress=False)
-    tickers_info = yf.Tickers(TICKERS)
+    # tickers_info = yf.Tickers(TICKERS)
     values = {}
     for tick in TICKERS_LIST:
         # print(dir(tickers_info.tickers[tick]))
@@ -53,11 +55,12 @@ def get_yahoo_values() -> dict:
     return values
 
 
-def format_values(values: dict) -> list:
+def format_values(values: Dict) -> List:
     """
     Formats the values taken from Yahoo and formats them for the email.
-    :param values: the data from Yahoo, already filtered.
-    :return: a list of lines for the email.
+
+    :param values: The data from Yahoo already filtered.
+    :return: A list of lines for the email.
     """
     max_ticker = len(max(TICKERS_LIST + ['stock'], key=len))
     keys = [key for key in [val for val in values.values()][0].keys()]
