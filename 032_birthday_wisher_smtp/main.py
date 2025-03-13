@@ -1,6 +1,8 @@
-import base64
+# import base64
 import json
 import os
+import re
+import smtplib
 from typing import Literal
 
 import pandas as pd
@@ -9,10 +11,10 @@ import logging.config
 from datetime import date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+# from googleapiclient.discovery import build
+# from google.oauth2.credentials import Credentials
+# from google_auth_oauthlib.flow import InstalledAppFlow
+# from google.auth.transport.requests import Request
 import anthropic
 from openai import OpenAI
 
@@ -22,10 +24,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client_openai = OpenAI()
-client_anthropic = anthropic.Anthropic()
-
 USER_EMAIL = os.getenv("USER_EMAIL")
+USER_PASSWORD = os.getenv("USER_PASSWORD")
 USER_BBC_EMAIL = os.getenv("USER_BBC_EMAIL")
 
 THIS_FOLDER = Path(__file__).parent.resolve()
@@ -43,23 +43,23 @@ logging.config.dictConfig(dict_conf)
 logger = logging.getLogger(__name__)
 
 
-def authenticate() -> Credentials:
-    """
-    Authenticate the user with Google's API.
-    :return: The credentials.
-    """
-    creds = None
-    if os.path.exists(TOKEN_FILE):
-        creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_FILE), SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open(TOKEN_FILE, 'w') as token:
-            token.write(creds.to_json())
-    return creds
+# def authenticate() -> Credentials:
+#     """
+#     Authenticate the user with Google's API.
+#     :return: The credentials.
+#     """
+#     creds = None
+#     if os.path.exists(TOKEN_FILE):
+#         creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
+#     if not creds or not creds.valid:
+#         if creds and creds.expired and creds.refresh_token:
+#             creds.refresh(Request())
+#         else:
+#             flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_FILE), SCOPES)
+#             creds = flow.run_local_server(port=0)
+#         with open(TOKEN_FILE, 'w') as token:
+#             token.write(creds.to_json())
+#     return creds
 
 
 class Birthday:
@@ -69,12 +69,13 @@ class Birthday:
         Initializes the class.
         """
         self.gmail_user = USER_EMAIL
+        self.gmail_password = USER_PASSWORD
         self.llm_text = ''
         self.recipients = {}
         self.system_instruction = ''
         self.user_message = ''
         self.person_name = ''
-        self.creds = authenticate()
+        # self.creds = authenticate()
 
     def prepare_prompt(self) -> None:
         """
@@ -101,6 +102,7 @@ class Birthday:
         """
         self.prepare_prompt()
         self.prepare_user_message()
+        client_openai = OpenAI()
         response = client_openai.chat.completions.create(
             model="gpt-4",
             messages=[
@@ -122,6 +124,7 @@ class Birthday:
         """
         self.prepare_prompt()
         self.prepare_user_message()
+        client_anthropic = anthropic.Anthropic()
         message = client_anthropic.messages.create(
             model="claude-3-7-sonnet-latest",
             max_tokens=500,
@@ -165,7 +168,6 @@ class Birthday:
         :param llm_used: The LLM to use
         :return: None
         """
-        service = build('gmail', 'v1', credentials=self.creds)
         message = MIMEMultipart('alternative')
 
         message['From'] = self.gmail_user
@@ -173,16 +175,29 @@ class Birthday:
         message['Bcc'] = USER_BBC_EMAIL
         message['Subject'] = subject_email
 
+        plain_email = re.sub('<.*?>', '', html_email).strip()
+        plain_email = '\n'.join(line.strip() for line in plain_email.split('\n'))
+        message.attach(MIMEText(plain_email, 'plain'))
+
         message.attach(MIMEText(html_email, 'html'))
 
-        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
-        data = {'raw': raw_message}
-
         try:
-            service.users().messages().send(userId='me', body=data).execute()
-            logger.info(f'Email sent to {recipient_email} using {llm_used}.')
-        except Exception as e:
-            logger.error(f'An error occurred: {e}')
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                server.starttls()
+                server.login(self.gmail_user, self.gmail_password)
+                server.sendmail(self.gmail_user, recipient_email, message.as_string())
+                logger.info(f'Email sent to {recipient_email} via password using {llm_used}.')
+        except smtplib.SMTPException:
+            logger.error('An error occurred while sending the email.')
+
+        # try:
+        #     raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        #     data = {'raw': raw_message}
+        #     service = build('gmail', 'v1', credentials=self.creds)
+        #     service.users().messages().send(userId='me', body=data).execute()
+        #     logger.info(f'Email sent to {recipient_email} via service using {llm_used}.')
+        # except Exception as e:
+        #     logger.error(f'An error occurred: {e}')
 
 
 if __name__ == '__main__':

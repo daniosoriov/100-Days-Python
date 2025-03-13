@@ -66,6 +66,9 @@ This file is downloaded from Google Contacts, and it contains the required colum
 
 ## Python Anywhere and Google Authentication
 
+**UPDATE**: I removed the dependency, and instead I am using an App Password (less secure) to authenticate with Google
+via SMTP.
+
 Unfortunately, I was unable to automate the authentication process for Google Cloud and Python Anywhere, as it requires
 OAuth2 verification. This means that the script will not work on Python Anywhere, as it requires manual intervention to
 authenticate the app.
