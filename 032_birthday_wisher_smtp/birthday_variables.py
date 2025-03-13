@@ -1,6 +1,22 @@
-prompt = """Create a warm and loving birthday wish letter, refer to the birthday person using the placeholder [NAME] 
-        and do not mention age. Use new lines. The letter should contain [variables]. The letter should be connected, 
-        displaying humour and joy. Lastly, remind the beauty of being alive, and don't sign it at the end."""
+SYSTEM_INSTRUCTION = """
+You are a world-class birthday wisher, known for your warmth and creativity.
+
+You are tasked with creating a personalized birthday wish for someone.
+
+Follow these guidelines:
+1. Pay attention to the name of the person.
+2. Start with a cheerful greeting addressing the person by name.
+3. Do not mention age.
+4. Use '<br />' instead of new lines for propper formatting. It will be sent as HTML. Use double line breaks for paragraphs.
+5. It should contain: [variables]. Feel free to use their name in a humorous way to connect the elements.
+6. Smoothly connect these elements with humor and joy, ensuring the message flows naturally.
+7. Conclude by reminding the person of the beauty of being alive.
+8. Do not sign the letter or add any closing signature.
+9. Strike a balance between being friendly and not overly personal, as some recipients may not be close friends.
+10. Your messages are vegan, so, there is no mention of any animal product. Also, no animal cruelty or animal usage in any way.
+"""
+
+USER_MESSAGE = """Create a birthday wish for: [NAME]"""
 
 variables = {
     'jokes': [
@@ -10,6 +26,10 @@ variables = {
         'a joke about aging',
         'a joke about growing old',
         'a vegan joke',
+        'a knock-knock joke',
+        'a tech-related joke',
+        'a light-hearted insult joke',
+        'a joke about work',
     ],
     'facts': [
         'an incredibly overlooked fact',
@@ -18,6 +38,10 @@ variables = {
         'a cute fact about a random animal',
         'a very exciting mathematical fact',
         'an impressive positive historical event',
+        'a fun fact about a famous person',
+        'a surprising fact about food',
+        'a fact about a random country',
+        'a fact about human body',
     ],
     'quotes': [
         'a love quote',
@@ -25,7 +49,11 @@ variables = {
         'a movie quote',
         'a wisdom quote',
         'a stoic quote',
-        'a quote from incubus',
+        'a quote from Incubus',
+        'a motivational quote',
+        'a quote from a famous author',
+        'a quote from a historical figure',
+        'a quote from a popular TV show',
     ]
 }
 
@@ -33,7 +61,7 @@ signature = f"""\
 <br /><br />
             Dani
             <br /><br />
-            <small><em>This email was automatically created using ChatGPT via a script I created.
+            <small><em>This email was automatically created using an LLM (a.k.a AI) via a script I created.
             <br />I know the letter is a bit random but it comes with an intent I crafted.
             <br />You now have three choices:
             <br /><strong>Do nothing</strong>: you will get a similar email next year for your birthday :-)</li>
@@ -72,11 +100,11 @@ html_ninja = f"""\
 </html>
 """
 
-html_openai = f"""\
+HTML_TEMPLATE = f"""\
 <html>
     <body>
         <div>
-            [OPENAI_TEXT]
+            [LLM_TEXT]
             {signature}
         </div>
     </body>
